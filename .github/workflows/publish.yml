@@ -30,7 +30,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           registry-url: https://npm.pkg.github.com
-          scope: '@francescocentrone'
+          scope: '@centronef'
           package-manager-cache: false
 
       - name: Install the dependency-free package

@@ -10,7 +10,7 @@ test('project installation, explicit update, rollback and guarded removal',async
   try{
     const project=path.join(temporary,'project'),source=path.join(temporary,'package');
     await fs.mkdir(project);await fs.mkdir(path.join(source,'skills','demo-skill'),{recursive:true});
-    const metadata={name:'@francescocentrone/skill-registry',version:'1.0.0'};
+    const metadata={name:'@centronef/skill-registry',version:'1.0.0'};
     await fs.writeFile(path.join(source,'package.json'),JSON.stringify(metadata));
     const sourceSkill=path.join(source,'skills','demo-skill','SKILL.md');
     await fs.writeFile(sourceSkill,'Version one');

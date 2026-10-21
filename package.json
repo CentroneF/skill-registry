@@ -1,13 +1,13 @@
 {
-  "name": "@francescocentrone/skill-registry",
+  "name": "@centronef/skill-registry",
   "version": "1.0.0",
   "description": "Shared development skills distributed through GitHub Packages.",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FrancescoCentrone/skill-registry.git"
+    "url": "git+https://github.com/CentroneF/skill-registry.git"
   },
-  "homepage": "https://github.com/FrancescoCentrone/skill-registry#readme",
+  "homepage": "https://github.com/CentroneF/skill-registry#readme",
   "files": [
     "skills/",
     "bin/",

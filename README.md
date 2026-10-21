@@ -1,8 +1,8 @@
 # Skill registry
 
-Shared development skills published as the npm package `@francescocentrone/skill-registry` to **GitHub Packages** at `https://npm.pkg.github.com`.
+Shared development skills published as the npm package `@centronef/skill-registry` to **GitHub Packages** at `https://npm.pkg.github.com`.
 
-The source repository is `https://github.com/FrancescoCentrone/skill-registry`. The package contains reusable skill folders, so application repositories can consume a released version instead of maintaining their own source copies.
+The source repository is `https://github.com/CentroneF/skill-registry`. The package contains reusable skill folders, so application repositories can consume a released version instead of maintaining their own source copies.
 
 ## Local checks
 
@@ -48,7 +48,7 @@ These steps are for a developer consuming the published package. The application
 
 ### 1. Check the prerequisites
 
-Install Node.js 24, which includes npm. Version `1.0.0` of `@francescocentrone/skill-registry` must already be published to GitHub Packages. If the package is private, your GitHub account must have permission to read it.
+Install Node.js 24, which includes npm. Version `1.0.0` of `@centronef/skill-registry` must already be published to GitHub Packages. If the package is private, your GitHub account must have permission to read it.
 
 ```sh
 node --version
@@ -60,7 +60,7 @@ npm --version
 GitHub's npm registry requires authentication even for public packages. Consumers can authenticate with a personal access token (classic) with `read:packages` and permission to read the package:
 
 ```sh
-npm login --scope=@francescocentrone --auth-type=legacy \
+npm login --scope=@centronef --auth-type=legacy \
   --registry=https://npm.pkg.github.com
 ```
 
@@ -73,7 +73,7 @@ Open a terminal in the destination project and run:
 ```sh
 cd /path/to/your-project
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@francescocentrone/skill-registry@1.0.0 \
+  --package=@centronef/skill-registry@1.0.0 \
   -- skill-registry install
 ```
 
@@ -108,7 +108,7 @@ $community-change-brief Read this project's request and prepare a short change b
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@francescocentrone/skill-registry@1.0.0 \
+  --package=@centronef/skill-registry@1.0.0 \
   -- skill-registry status
 ```
 
@@ -120,7 +120,7 @@ To adopt a published update, select that exact package version and run `install`
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@francescocentrone/skill-registry@1.1.0 \
+  --package=@centronef/skill-registry@1.1.0 \
   -- skill-registry install
 ```
 
@@ -132,7 +132,7 @@ The installer replaces unchanged skills it previously installed, removes managed
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@francescocentrone/skill-registry@1.0.0 \
+  --package=@centronef/skill-registry@1.0.0 \
   -- skill-registry uninstall
 ```
 

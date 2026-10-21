@@ -3,7 +3,7 @@ import {readFile,readdir} from 'node:fs/promises';
 
 const root=new URL('../',import.meta.url);
 const pkg=JSON.parse(await readFile(new URL('package.json',root),'utf8'));
-assert.equal(pkg.name,'@francescocentrone/skill-registry','Unexpected package name.');
+assert.equal(pkg.name,'@centronef/skill-registry','Unexpected package name.');
 assert.match(pkg.version,/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/,'Use a stable major.minor.patch version.');
 assert.equal(pkg.publishConfig.registry,'https://npm.pkg.github.com','Publish only to GitHub Packages.');
 assert.notEqual(pkg.private,true,'A private:true npm package cannot be published.');
