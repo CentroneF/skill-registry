@@ -1,6 +1,6 @@
 {
   "name": "@centronef/skill-registry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Shared development skills distributed through GitHub Packages.",
   "license": "UNLICENSED",
   "repository": {
