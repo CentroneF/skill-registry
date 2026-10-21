@@ -1,0 +1,53 @@
+name: Publish skills to GitHub Packages
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out the release
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          persist-credentials: false
+
+      - name: Set up Node and GitHub Packages authentication
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://npm.pkg.github.com
+          scope: '@francescocentrone'
+          package-manager-cache: false
+
+      - name: Install the dependency-free package
+        run: npm ci --ignore-scripts
+
+      - name: Validate skills and release version
+        run: npm run check
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+
+      - name: Test project installation
+        run: npm test
+
+      - name: Preview package contents
+        run: npm pack --dry-run --ignore-scripts
+
+      - name: Publish the versioned skills package
+        run: npm publish --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

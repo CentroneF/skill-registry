@@ -1,0 +1,29 @@
+{
+  "name": "@francescocentrone/skill-registry",
+  "version": "1.0.0",
+  "description": "Shared development skills distributed through GitHub Packages.",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FrancescoCentrone/skill-registry.git"
+  },
+  "homepage": "https://github.com/FrancescoCentrone/skill-registry#readme",
+  "files": [
+    "skills/",
+    "bin/",
+    "lib/"
+  ],
+  "bin": {
+    "skill-registry": "bin/skill-registry.mjs"
+  },
+  "scripts": {
+    "check": "node scripts/check-package.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}
