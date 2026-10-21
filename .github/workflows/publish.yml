@@ -1,28 +1,28 @@
 name: Publish skills to GitHub Packages
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
 
 permissions:
   contents: read
 
 concurrency:
-  group: publish-${{ github.event.release.tag_name }}
+  group: publish-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   publish:
-    if: ${{ !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
-      - name: Check out the release
+      - name: Check out the pushed tag
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Set up Node and GitHub Packages authentication
@@ -39,7 +39,7 @@ jobs:
       - name: Validate skills and release version
         run: npm run check
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
 
       - name: Test project installation
         run: npm test

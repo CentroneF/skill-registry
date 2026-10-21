@@ -17,21 +17,30 @@ npm pack --dry-run --ignore-scripts
 
 ## Publishing through GitHub Actions
 
-The workflow in `.github/workflows/publish.yml` runs when a **stable GitHub release is published**. It checks out that release, validates the skills and requires the release tag to match `package.json`, then publishes to GitHub Packages.
+The workflow in `.github/workflows/publish.yml` runs when a **version tag is pushed** (for example, `v1.0.0`). It checks out the tagged commit, validates the skills and requires the tag to match the stable version in `package.json`, then publishes to GitHub Packages.
 
-For version `1.0.0`, publish a release tagged `v1.0.0`. Saving a draft release does not publish the package. A normal branch push does not publish it either.
+For version `1.0.0`, commit the package and workflow changes, then create and push the tag:
 
-The workflow uses the repository's automatically supplied `GITHUB_TOKEN` with `packages: write`. No publishing PAT or additional repository secret is needed. The workflow must be present in the released commit. If a package with this name already exists, grant this repository access to it in the package settings.
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+A GitHub release is optional. A normal branch push does not publish the package. Prerelease tags such as `v1.0.0-beta.1` fail the version check and cannot publish.
+
+The workflow uses the repository's automatically supplied `GITHUB_TOKEN` with `packages: write`. No publishing PAT or additional repository secret is needed. The updated workflow must be present in the tagged commit. If a package with this name already exists, grant this repository access to it in the package settings.
+
+An existing remote tag does not trigger the updated workflow retroactively, and pushing it again unchanged creates no new event. If `v1.0.0` already points to the old workflow, use a new package version and matching tag on a commit containing this workflow (for example, `1.0.1` and `v1.0.1`).
 
 This checkout is prepared locally. Commit and push it yourself when ready; no commit, push, release or package publication has been performed by the setup.
 
 ## Demo sequence after uploading the repository
 
 1. Show `skills/community-change-brief/SKILL.md` and the package version.
-2. In GitHub, create and publish the stable release `v1.0.0`.
+2. Create and push a matching version tag, such as `v1.0.0`, on the commit containing the workflow.
 3. Open Actions and watch **Publish skills to GitHub Packages**.
 4. Open the package from the repository's Packages section and show version `1.0.0`.
-5. After changing a skill, increase the package version and publish a new matching release.
+5. After changing a skill, increase the package version and push a new matching tag.
 
 To prepare a compatible update locally after the initial commit:
 
@@ -40,7 +49,7 @@ npm version minor --no-git-tag-version
 npm run check
 ```
 
-This updates `package.json` and `package-lock.json` to `1.1.0`. Commit the changes, upload them when ready, then publish release `v1.1.0`. Keep previous versions available. Never reuse a published package version.
+This updates `package.json` and `package-lock.json` to `1.1.0`. Commit the changes, then create and push tag `v1.1.0`. Keep previous versions available. Never reuse a published package version.
 
 ## Install skills in a new project
 
