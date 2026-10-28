@@ -36,7 +36,7 @@ This checkout is prepared locally. Commit and push it yourself when ready; no co
 
 ## Demo sequence after uploading the repository
 
-1. Show `skills/community-change-brief/SKILL.md` and the package version.
+1. Show `skills/oracle-plan/SKILL.md` and the package version.
 2. Create and push a matching version tag, such as `v1.0.0`, on the commit containing the workflow.
 3. Open Actions and watch **Publish skills to GitHub Packages**.
 4. Open the package from the repository's Packages section and show version `1.0.0`.
@@ -53,79 +53,40 @@ This updates `package.json` and `package-lock.json` to `1.1.0`. Commit the chang
 
 ## Install skills in a new project
 
-These steps are for a developer consuming the published package. The application can use any language and does not need a `package.json` or npm dependencies.
+The destination project can use any language and does not need a `package.json`. Install Node.js 24 (including npm), and use a published package release containing the agent-aware installer. The examples below use `1.1.0`; replace it with the release containing these changes once published. Older installer releases do not recognize `--agent`.
 
-### 1. Check the prerequisites
+### 1. Authenticate to GitHub Packages
 
-Install Node.js 24, which includes npm. Version `1.0.0` of `@centronef/skill-registry` must already be published to GitHub Packages. If the package is private, your GitHub account must have permission to read it.
-
-```sh
-node --version
-npm --version
-```
-
-### 2. Authenticate to GitHub Packages
-
-GitHub's npm registry requires authentication even for public packages. Consumers can authenticate with a personal access token (classic) with `read:packages` and permission to read the package:
+Your GitHub account needs permission to read the package. Authenticate with a personal access token (classic) with `read:packages`:
 
 ```sh
 npm login --scope=@centronef --auth-type=legacy \
   --registry=https://npm.pkg.github.com
 ```
 
-Use your GitHub username and the token as the password. Keep credentials in your user configuration, outside this repository. The committed `.npmrc` contains only the registry mapping.
+Use your GitHub username and the token as the password. Keep credentials in your user configuration, outside this repository.
 
-### 3. Install into your project
+### 2. Choose an agent and install
 
-Open a terminal in the destination project and run:
-
-```sh
-cd /path/to/your-project
-npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.0.0 \
-  -- skill-registry install
-```
-
-The command runs the package installer from npm's cache. It does not require a `package.json` in the destination project or add npm dependencies to it. The installer writes real skill files into the project:
-
-```text
-your-project/
-  .agents/
-    skill-registry-lock.json
-    skills/
-      community-change-brief/
-        SKILL.md
-```
-
-The skills are project-local copies, not links to a user-level installation. The lock file records the version installed in this project.
-
-To install into a different project without changing directory, append `--project /path/to/your-project` after `install`.
-
-### 4. Use the installed skill
-
-Start a fresh AI tool session in this project and invoke the skill. For Codex, use `$community-change-brief` with a request to prepare a change brief. If the newly installed skill is not visible, restart the tool.
-
-Example prompt:
-
-```text
-$community-change-brief Read this project's request and prepare a short change brief with affected files and proposed checks. Prepare the brief only.
-```
-
-## Maintain the installed skills
-
-### Check the installed version
+From your destination project, run:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.0.0 \
-  -- skill-registry status
+  --package=@centronef/skill-registry@1.1.0 \
+  -- skill-registry install --agent claude
 ```
 
-The project receipt records the installed package version and a hash for each managed skill. Status reads that receipt, so its reported version reflects this project's installed files rather than the client version used to run the command.
+Use `--agent codex` for Codex, or select another supported value:
 
-### Update or roll back
+| `--agent` | Agent | Project skills directory | Project receipt |
+| --- | --- | --- | --- |
+| `codex` | Codex | `.agents/skills` | `.agents/skill-registry-lock.json` |
+| `claude` | Claude Code | `.claude/skills` | `.claude/skill-registry-lock.json` |
+| `cursor` | Cursor | `.cursor/skills` | `.cursor/skill-registry-lock.json` |
+| `copilot` | GitHub Copilot | `.github/skills` | `.github/skill-registry-lock.json` |
+| `gemini` | Gemini CLI | `.gemini/skills` | `.gemini/skill-registry-lock.json` |
 
-To adopt a published update, select that exact package version and run `install` again:
+Omit `--agent` to choose from a numbered list. Install, status, and uninstall all ask when the flag is omitted, even if you previously chose an agent:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
@@ -133,36 +94,100 @@ npm exec --yes --registry=https://npm.pkg.github.com \
   -- skill-registry install
 ```
 
-To roll back, use `@1.0.0` in the same command. Each project updates independently. Publishing a new version does not change any project until its user runs the installer.
+Blank or invalid selections ask again. Ctrl-C or end-of-input cancels without changing project files. If an interactive terminal is unavailable, the command exits with instructions to pass `--agent`. **CI and other automation must pass the flag explicitly**; older commands without it no longer silently select Codex. When available, a controlling terminal can be used even with redirected output.
 
-The installer replaces unchanged skills it previously installed, removes managed skills retired by the selected package, and preserves unrelated skills. It refuses to overwrite an unrelated folder or any managed skill with local edits. Save those edits separately before updating. A rollback changes instructions for future tasks and does not undo work already generated.
+The installer copies real files from npm's cache, without adding dependencies to the destination project. For Claude Code, the result includes:
 
-### Remove the package skills
+```text
+your-project/
+  .claude/
+    skill-registry-lock.json
+    skills/
+      oracle-plan/
+        SKILL.md
+        references/
+      ...
+```
+
+All packaged skills are copied unchanged, including their supporting files. The receipt records the installed package version and hashes. Existing schema-version-1 Codex receipts remain supported.
+
+To choose a different project, combine the options in either order:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.0.0 \
-  -- skill-registry uninstall
+  --package=@centronef/skill-registry@1.1.0 \
+  -- skill-registry install --project /path/to/your-project --agent codex
 ```
 
-Only unchanged skills listed in the project receipt are removed. Other project skills remain in place.
+### 3. Use the installed skill
+
+Start or refresh your agent session in the project. For example, in Codex:
+
+```text
+$oracle-plan Plan the requested change, identify affected files, and define verification steps. Prepare the plan only.
+```
+
+The installer supports the agents' skill discovery directories. Instructions are unchanged, so agent-specific tools or commands mentioned by a skill still need equivalent capabilities in your agent.
+
+Some agents also read other agents' folders. Cursor and Copilot can discover shared locations such as `.agents/skills` and `.claude/skills`. Gemini reads `.agents/skills` with precedence over `.gemini/skills` for duplicate names. Installing a separate copy does not guarantee exclusive visibility or change which copy an agent loads. See the official discovery documentation in References.
+
+## Maintain the installed skills
+
+### Check the installed version
+
+```sh
+npm exec --yes --registry=https://npm.pkg.github.com \
+  --package=@centronef/skill-registry@1.1.0 \
+  -- skill-registry status --agent claude
+```
+
+Status reads only the selected destination's receipt and reports its installed version and file state. It does not report the version of the installer used to run the command. Status and uninstall do not create missing installations.
+
+### Update or roll back every managed installation
+
+Choose the desired published package version and run `install` again:
+
+```sh
+npm exec --yes --registry=https://npm.pkg.github.com \
+  --package=@centronef/skill-registry@1.1.0 \
+  -- skill-registry install --agent codex
+```
+
+**Install updates every existing managed agent installation in the project, even when `--agent` is supplied.** It also installs into the selected destination if missing. For example, with existing Codex and Claude installations, the command above updates both; selecting Cursor updates both and adds Cursor. The command lists all destinations before replacing files.
+
+Only the five known receipt locations are inspected. An unselected agent directory without a registry receipt is left untouched; its existence alone does not make it managed. When several agents share the same destination, it is updated once using one receipt. Separate destination folders keep separate receipts, but updates synchronize their package versions.
+
+The installer replaces unchanged managed skills, removes managed skills retired by the selected release, and preserves unrelated content, including `.github` configuration. It refuses to overwrite unrelated same-name folders, locally edited managed skills, symlink destinations, or invalid receipts. A conflict in any managed installation blocks the entire update before replacement. A recoverable replacement failure restores all affected skills and receipts. Save local edits separately before updating.
+
+To roll back, invoke an older published package version **that contains this multi-agent installer**. Rollback updates all managed destinations too; it changes instructions for future tasks and does not undo generated work. Older installers only manage `.agents`, so they cannot perform a coordinated multi-agent rollback. Projects update independently, and publishing alone changes no installation.
+
+### Remove one agent's package skills
+
+```sh
+npm exec --yes --registry=https://npm.pkg.github.com \
+  --package=@centronef/skill-registry@1.1.0 \
+  -- skill-registry uninstall --agent claude
+```
+
+Uninstall removes only unchanged managed skills in the selected destination and its receipt. Other destinations and unrelated skills remain. If several agents read the same destination, removing its managed files affects all those readers.
 
 ### Keep generated skills out of application source control
 
-The files live inside the project so the AI tool can discover them. If you want distribution to remain separate from application source, ignore the managed skill folders in the application repository. For this example, add `.agents/skills/community-change-brief/` to that project's ignore rules. You can keep `.agents/skill-registry-lock.json` in version control as a record of the selected release. Do not ignore other project skills unless intended.
+Ignore only the managed skill folders under your chosen destinations, for example `.claude/skills/oracle-plan/` and `.agents/skills/oracle-plan/`. Apply the same pattern to the other packaged skill names. You can keep the corresponding `skill-registry-lock.json` files in version control to record the installed release. Do not ignore whole agent configuration directories or unrelated skills unless intended.
 
 ### Try the installer before publishing
 
 From this registry checkout:
 
 ```sh
-node bin/skill-registry.mjs install --project /path/to/your-project
-node bin/skill-registry.mjs status --project /path/to/your-project
+node bin/skill-registry.mjs install --project /path/to/your-project --agent claude
+node bin/skill-registry.mjs status --project /path/to/your-project --agent claude
+node bin/skill-registry.mjs uninstall --project /path/to/your-project --agent claude
 ```
 
-These commands use the local package contents and do not download or publish anything.
+Omit `--agent` to try the interactive list. These commands use the local package contents and do not download or publish anything. Use a disposable project when trying updates across multiple agents.
 
-New GitHub npm packages initially have private visibility. If you want public distribution, change the package visibility in its settings after the first publication. Repository visibility and package visibility are separate settings.
+New GitHub npm packages initially have private visibility. Repository visibility and package visibility are separate settings.
 
 ## Adding another skill
 
@@ -172,3 +197,9 @@ Add `skills/<skill-name>/SKILL.md` with `name` and `description` frontmatter. Ke
 
 - [Publishing Node.js packages with GitHub Actions](https://docs.github.com/en/actions/tutorials/publish-packages/publish-nodejs-packages)
 - [GitHub Packages npm registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry)
+
+- [Codex local skills](https://learn.chatgpt.com/docs/build-skills)
+- [Claude Code skills](https://code.claude.com/docs/en/skills)
+- [Cursor Agent Skills](https://cursor.com/docs/skills)
+- [GitHub Copilot agent skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills)
+- [Gemini CLI Agent Skills](https://geminicli.com/docs/cli/skills/)
