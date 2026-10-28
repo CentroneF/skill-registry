@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release Skill Registry"
+  short_description: "Bump, validate, tag, and push a registry release"
+  default_prompt: "Use $release-skill-registry to release the next patch version of this skill registry and push its version tag."
