@@ -42,9 +42,24 @@ Then wait for the user's input.
 
 ### Step 1: Context Gathering & Initial Analysis
 
+#### Resolve the change record and read the linked GitHub issue
+
+Before research, complexity assessment, or questions:
+
+1. When invoked with a change ID, read `context/changes/<change-id>/change.md` fully. When given a file inside a change folder, also read that folder's `change.md` if present. Refuse archived changes as specified in Step 4.
+2. If `change.md` contains a non-empty `issue_url`, fetch that issue's current title and full description. Also fetch a GitHub issue supplied directly as the task reference. For a standard `https://github.com/<owner>/<repo>/issues/<number>` URL, use safely quoted arguments:
+
+   ```bash
+   gh issue view <number> --repo <owner>/<repo> --json number,title,body,url,state
+   ```
+
+   Read the complete returned `body`; the local change title and Notes link are not substitutes for the issue description. If a direct issue reference differs from the record's `issue_url`, resolve which issue defines the task with the user before planning.
+3. Use the issue description's requirements, acceptance criteria, dependencies, and scope alongside local foundation documents and upstream artifacts. Do not re-ask decisions already answered there. Surface conflicts with local documents or later user instructions instead of silently choosing one. Cite the issue URL in the plan's References.
+4. If the linked issue cannot be fetched, report the error and ask for restored access or the current issue description before continuing dependent planning. Do not silently plan from the title alone. If there is no linked or directly supplied GitHub issue, continue with the provided local task context without requiring GitHub access.
+
 #### Step 1.0: Identify upstream artifacts and scale questioning depth
 
-Before any reading, identify what kinds of upstream artifacts the user passed in. Each one represents decisions already made — don't re-ask them.
+After resolving the task context above, identify what kinds of upstream artifacts the user passed in. Each one represents decisions already made — don't re-ask them.
 
 - **Frame brief** — path matches `context/changes/<change-id>/frame.md`, or content begins with `# Frame Brief:` / contains a `## Reframed` section.
 - **Research doc** — path matches `context/changes/<change-id>/research.md`, or YAML frontmatter contains `topic:` and `researcher:` fields.
