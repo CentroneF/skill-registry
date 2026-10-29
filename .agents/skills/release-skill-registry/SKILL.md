@@ -1,11 +1,11 @@
 ---
 name: release-skill-registry
-description: Release CentroneF/skill-registry by updating package.json and package-lock.json, validating the package, committing the version, creating a matching version tag, and pushing that tag to trigger GitHub Packages publishing. Use when asked to release this registry or bump its version and push a release tag.
+description: Release CentroneF/skill-registry by updating package.json and package-lock.json, validating the package, committing and pushing the version to the release branch, creating a matching version tag, and pushing that tag to trigger GitHub Packages publishing. Use when asked to release this registry or bump its version and push a release tag.
 ---
 
 # Release skill registry
 
-Use this skill in the `CentroneF/skill-registry` checkout. Creating or editing this skill does not itself authorize a release. A request to release, or to bump the version and push its tag, authorizes the steps below; a dry-run request reports proposed operations without changing files, commits, or tags. A prepare-only request may update version files and run checks but stops before committing, tagging, or pushing.
+Use this skill in the `CentroneF/skill-registry` checkout. Creating or editing this skill does not itself authorize a release. A request to release, or to bump the version and push its tag, authorizes the release branch push and tag push below; a dry-run request reports proposed operations without changing files, commits, or tags. A prepare-only request may update version files and run checks but stops before committing, tagging, or pushing.
 
 ## Choose the release
 
@@ -30,16 +30,17 @@ Read `package.json`, `package-lock.json`, `.github/workflows/publish.yml`, and r
 
 For prepare-only requests, stop after these checks and report the reviewed diff. Do not proceed to the release steps below.
 
-## Commit, tag, and push
+## Commit, push the branch, then tag
 
 - Commit only `package.json` and `package-lock.json`, using explicit paths and a message such as `chore: release v1.2.0`. Never amend, bypass hooks, or include unrelated staged files.
+- Before pushing the branch, state the exact repository, release branch, version, and release commit. Push the release commit with `git push origin <release-commit>:refs/heads/<release-branch>`, using the remote default branch unless the user explicitly selected another branch. Verify with `git ls-remote` that the remote branch points to the release commit before creating or pushing the tag. If the push is rejected or verification fails, stop without pushing the tag; do not force-push or merge automatically. An explicitly requested detached commit needs a destination branch before pushing.
 - Create an annotated tag `v<resolved-version>` on that release commit, with message `Release v<resolved-version>`. Confirm the tag dereferences to the release commit and that the tagged package and lockfile contain the target version.
-- Before pushing, state the exact repository, version, tag, and commit, and explain that pushing this tag triggers the GitHub Packages publishing workflow. Continue within an already-authorized release request without asking for duplicate permission. If the request only authorized preparation, stop here and show the prepared changes instead of publishing.
-- Push only the named tag with `git push origin refs/tags/v<resolved-version>`. Do not use `--tags`, `--force`, or push a branch unless the user also requested a branch push. A tag push transfers its release commit even if that commit is not yet on a remote branch; report when the local branch remains ahead of its remote.
+- Before pushing the tag, state the exact repository, version, tag, and commit, and explain that pushing this tag triggers the GitHub Packages publishing workflow. Continue within an already-authorized release request without asking for duplicate permission. If the request only authorized preparation, stop here and show the prepared changes instead of publishing.
+- After verifying the branch push, push only the named tag with `git push origin refs/tags/v<resolved-version>`. Do not use `--tags` or `--force`. Never push the tag before the release commit is verified on the remote release branch.
 - Verify the remote tag points to the release commit. Inspect the matching GitHub Actions run when available; a successful push is not proof of successful package publication. Report a queued/running workflow as pending, or link the failed run and its error. Never rerun publishing or move a tag to repair a failed release automatically.
 
 ## Failure and retry boundaries
 
-If a commit, tag, push, or workflow step fails, stop at that boundary and report the exact completed steps and remaining local state. Keep existing tags and commits intact. On retry, inspect local and remote tag targets first: if the remote already has the exact intended tag and commit, do not push or publish again. A remote query failure or a conflicting tag requires resolution before proceeding. Do not silently increment again, delete tags, or bypass an approval rejection.
+If a commit, branch push, tag, tag push, or workflow step fails, stop at that boundary and report the exact completed steps and remaining local state. Keep existing tags and commits intact. On retry, inspect the release commit, remote branch, and local and remote tag targets first. Reuse the prepared release version and commit rather than incrementing again. If the branch already points to that commit, skip its push; if a local tag already points to that commit, reuse it. If the remote branch has advanced unexpectedly or a tag conflicts, stop for resolution. Resume at the first incomplete step: if the remote already has the exact intended tag and commit, do not push or publish again. A remote query failure or a conflicting tag requires resolution before proceeding. Do not silently increment again, delete tags, or bypass an approval rejection.
 
-Finish with the released version, commit, tag, remote verification, workflow link/status, and whether any version commit still needs a branch push. Do not create a GitHub Release unless requested.
+Finish with the released version, commit, tag, verified remote branch and tag targets, workflow link/status, and working-tree state. Do not create a GitHub Release unless requested.
