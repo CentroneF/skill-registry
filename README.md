@@ -17,43 +17,26 @@ npm pack --dry-run --ignore-scripts
 
 ## Publishing through GitHub Actions
 
-The workflow in `.github/workflows/publish.yml` runs when a **version tag is pushed** (for example, `v1.0.0`). It checks out the tagged commit, validates the skills and requires the tag to match the stable version in `package.json`, then publishes to GitHub Packages.
+The workflow in `.github/workflows/publish.yml` runs when a **version tag is pushed**. It checks out the tagged commit, validates the skills and requires the tag to match the stable version in `package.json`, then publishes to GitHub Packages.
 
-For version `1.0.0`, commit the package and workflow changes, then create and push the tag:
-
-```sh
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-A GitHub release is optional. A normal branch push does not publish the package. Prerelease tags such as `v1.0.0-beta.1` fail the version check and cannot publish.
-
-The workflow uses the repository's automatically supplied `GITHUB_TOKEN` with `packages: write`. No publishing PAT or additional repository secret is needed. The updated workflow must be present in the tagged commit. If a package with this name already exists, grant this repository access to it in the package settings.
-
-An existing remote tag does not trigger the updated workflow retroactively, and pushing it again unchanged creates no new event. If `v1.0.0` already points to the old workflow, use a new package version and matching tag on a commit containing this workflow (for example, `1.0.1` and `v1.0.1`).
-
-This checkout is prepared locally. Commit and push it yourself when ready; no commit, push, release or package publication has been performed by the setup.
-
-## Demo sequence after uploading the repository
-
-1. Show `skills/oracle-plan/SKILL.md` and the package version.
-2. Create and push a matching version tag, such as `v1.0.0`, on the commit containing the workflow.
-3. Open Actions and watch **Publish skills to GitHub Packages**.
-4. Open the package from the repository's Packages section and show version `1.0.0`.
-5. After changing a skill, increase the package version and push a new matching tag.
-
-To prepare a compatible update locally after the initial commit:
+To prepare an update, increase the package version and run the checks:
 
 ```sh
-npm version minor --no-git-tag-version
+npm version patch --no-git-tag-version --ignore-scripts
 npm run check
+npm test
+npm pack --dry-run --ignore-scripts
 ```
 
-This updates `package.json` and `package-lock.json` to `1.1.0`. Commit the changes, then create and push tag `v1.1.0`. Keep previous versions available. Never reuse a published package version.
+Commit the changes, then create and push a matching `v<version>` tag using the version in `package.json`. Never reuse a published package version or an existing tag. A normal branch push does not publish the package. Prerelease versions are not supported.
+
+Open Actions and watch **Publish skills to GitHub Packages** to confirm publication succeeds. The published release is then available through `@latest`. A GitHub release is optional.
+
+The workflow uses the repository's automatically supplied `GITHUB_TOKEN` with `packages: write`. No publishing PAT or additional repository secret is needed. The workflow must be present in the tagged commit. If a package with this name already exists, grant this repository access to it in the package settings.
 
 ## Install skills in a new project
 
-The destination project can use any language and does not need a `package.json`. Install Node.js 24 (including npm). The examples below use `1.1.2`, which contains the agent-aware installer. Version `1.1.0` does not recognize `--agent` and reports `Expected --project PATH, or no options to use the current directory.` when it is supplied.
+The destination project can use any language and does not need a `package.json`. Install Node.js 24 (including npm). The examples below use `@latest` to run the latest published release.
 
 ### 1. Authenticate to GitHub Packages
 
@@ -72,7 +55,7 @@ From your destination project, run the command below. When `--project` is omitte
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.2 \
+  --package=@centronef/skill-registry@latest \
   -- skill-registry install --agent claude
 ```
 
@@ -90,11 +73,11 @@ Omit `--agent` to choose from a numbered list. Install, status, and uninstall al
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.2 \
+  --package=@centronef/skill-registry@latest \
   -- skill-registry install
 ```
 
-Blank or invalid selections ask again. Ctrl-C or end-of-input cancels without changing project files. If an interactive terminal is unavailable, the command exits with instructions to pass `--agent`. **CI and other automation must pass the flag explicitly**; older commands without it no longer silently select Codex. When available, a controlling terminal can be used even with redirected output.
+Blank or invalid selections ask again. Ctrl-C or end-of-input cancels without changing project files. If an interactive terminal is unavailable, the command exits with instructions to pass `--agent`. **CI and other automation must pass the flag explicitly**. When available, a controlling terminal can be used even with redirected output.
 
 The installer copies real files from npm's cache, without adding dependencies to the destination project. For Claude Code, the result includes:
 
@@ -109,13 +92,13 @@ your-project/
       ...
 ```
 
-All packaged skills are copied unchanged, including their supporting files. The receipt records the installed package version and hashes. Existing schema-version-1 Codex receipts remain supported.
+All packaged skills are copied unchanged, including their supporting files. The receipt records the installed package version and hashes.
 
 To choose a different project, combine the options in either order:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.2 \
+  --package=@centronef/skill-registry@latest \
   -- skill-registry install --project /path/to/your-project --agent codex
 ```
 
@@ -137,19 +120,19 @@ Some agents also read other agents' folders. Cursor and Copilot can discover sha
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.2 \
+  --package=@centronef/skill-registry@latest \
   -- skill-registry status --agent claude
 ```
 
 Status reads only the selected destination's receipt and reports its installed version and file state. It does not report the version of the installer used to run the command. Status and uninstall do not create missing installations.
 
-### Update or roll back every managed installation
+### Update every managed installation
 
-Choose the desired published package version and run `install` again:
+Run `install` again with `@latest` to update to the latest published release:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.2 \
+  --package=@centronef/skill-registry@latest \
   -- skill-registry install --agent codex
 ```
 
@@ -159,13 +142,13 @@ Only the five known receipt locations are inspected. An unselected agent directo
 
 The installer replaces unchanged managed skills, removes managed skills retired by the selected release, and preserves unrelated content, including `.github` configuration. It refuses to overwrite unrelated same-name folders, locally edited managed skills, symlink destinations, or invalid receipts. A conflict in any managed installation blocks the entire update before replacement. A recoverable replacement failure restores all affected skills and receipts. Save local edits separately before updating.
 
-To roll back, invoke an older published package version **that contains this multi-agent installer**. Rollback updates all managed destinations too; it changes instructions for future tasks and does not undo generated work. Older installers only manage `.agents`, so they cannot perform a coordinated multi-agent rollback. Projects update independently, and publishing alone changes no installation.
+Projects update independently, and publishing alone changes no installation. Run the update command in each project to install the latest release.
 
 ### Remove one agent's package skills
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.2 \
+  --package=@centronef/skill-registry@latest \
   -- skill-registry uninstall --agent claude
 ```
 
