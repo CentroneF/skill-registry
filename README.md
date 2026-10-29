@@ -53,7 +53,7 @@ This updates `package.json` and `package-lock.json` to `1.1.0`. Commit the chang
 
 ## Install skills in a new project
 
-The destination project can use any language and does not need a `package.json`. Install Node.js 24 (including npm), and use a published package release containing the agent-aware installer. The examples below use `1.1.0`; replace it with the release containing these changes once published. Older installer releases do not recognize `--agent`.
+The destination project can use any language and does not need a `package.json`. Install Node.js 24 (including npm). The examples below use `1.1.2`, which contains the agent-aware installer. Version `1.1.0` does not recognize `--agent` and reports `Expected --project PATH, or no options to use the current directory.` when it is supplied.
 
 ### 1. Authenticate to GitHub Packages
 
@@ -68,11 +68,11 @@ Use your GitHub username and the token as the password. Keep credentials in your
 
 ### 2. Choose an agent and install
 
-From your destination project, run:
+From your destination project, run the command below. When `--project` is omitted, skills are installed in the current directory, under the selected agent’s skills folder:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.0 \
+  --package=@centronef/skill-registry@1.1.2 \
   -- skill-registry install --agent claude
 ```
 
@@ -90,7 +90,7 @@ Omit `--agent` to choose from a numbered list. Install, status, and uninstall al
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.0 \
+  --package=@centronef/skill-registry@1.1.2 \
   -- skill-registry install
 ```
 
@@ -115,7 +115,7 @@ To choose a different project, combine the options in either order:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.0 \
+  --package=@centronef/skill-registry@1.1.2 \
   -- skill-registry install --project /path/to/your-project --agent codex
 ```
 
@@ -137,7 +137,7 @@ Some agents also read other agents' folders. Cursor and Copilot can discover sha
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.0 \
+  --package=@centronef/skill-registry@1.1.2 \
   -- skill-registry status --agent claude
 ```
 
@@ -149,7 +149,7 @@ Choose the desired published package version and run `install` again:
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.0 \
+  --package=@centronef/skill-registry@1.1.2 \
   -- skill-registry install --agent codex
 ```
 
@@ -165,7 +165,7 @@ To roll back, invoke an older published package version **that contains this mul
 
 ```sh
 npm exec --yes --registry=https://npm.pkg.github.com \
-  --package=@centronef/skill-registry@1.1.0 \
+  --package=@centronef/skill-registry@1.1.2 \
   -- skill-registry uninstall --agent claude
 ```
 

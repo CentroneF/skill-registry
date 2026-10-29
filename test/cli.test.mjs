@@ -7,14 +7,28 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const cli=fileURLToPath(new URL('../bin/skill-registry.mjs',import.meta.url));
 
-function run(args){
+function run(args,{cwd}={}){
   return new Promise((resolve,reject)=>{
-    const child=spawn(process.execPath,[cli,...args],{stdio:['pipe','pipe','pipe'],detached:process.platform!=='win32'});
+    const child=spawn(process.execPath,[cli,...args],{cwd,stdio:['pipe','pipe','pipe'],detached:process.platform!=='win32'});
     let stdout='',stderr='';
     child.stdout.on('data',chunk=>stdout+=chunk);child.stderr.on('data',chunk=>stderr+=chunk);
     child.on('error',reject);child.on('close',code=>resolve({code,stdout,stderr}));child.stdin.end();
   });
 }
+
+test('explicit agent defaults to the current directory when project is omitted',async t=>{
+  const project=await fs.mkdtemp(path.join(os.tmpdir(),'agent-cli-cwd-'));
+  t.after(()=>fs.rm(project,{recursive:true,force:true}));
+  const install=await run(['install','--agent','claude'],{cwd:project});
+  assert.equal(install.code,0,install.stderr);
+  await fs.stat(path.join(project,'.claude','skills','oracle-plan','SKILL.md'));
+  const status=await run(['status','--agent','claude'],{cwd:project});
+  assert.equal(status.code,0,status.stderr);assert.match(status.stdout,/unchanged/);
+  const uninstall=await run(['uninstall','--agent','claude'],{cwd:project});
+  assert.equal(uninstall.code,0,uninstall.stderr);
+  await assert.rejects(fs.stat(path.join(project,'.claude','skills','oracle-plan')),{code:'ENOENT'});
+  await assert.rejects(fs.stat(path.join(project,'.claude','skill-registry-lock.json')),{code:'ENOENT'});
+});
 
 test('explicit agent works without a terminal in both option orders',async t=>{
   const project=await fs.mkdtemp(path.join(os.tmpdir(),'agent-cli-'));
